@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def cleaning(df):
 
@@ -36,14 +37,9 @@ def cleaning(df):
     
     # it looks that the top Unit prices are either Shipping or NaN
     # I will drop the NaN from StockCode (they are from the MANUAL code) because they don't offer any clear insights
-    # and I will create a seperate DataFrame with the shipping, and drop it from the main file
     df.dropna(subset='StockCode', inplace=True)
-
-    df_ship = df[df.StockCode == 'SHIPPING']
-    df = df[df.StockCode != 'SHIPPING']
 
     # Resetting index
     df.reset_index(drop=True, inplace=True)
-    df_ship.reset_index(drop=True, inplace=True)
     
-    return df, df_ship
+    return df
