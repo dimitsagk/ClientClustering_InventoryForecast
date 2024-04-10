@@ -31,7 +31,8 @@ def cleaning(df):
 
     # I see that there are also the shipping costs with SrockCode 'POST' and 'DOT'
     # For clarity I will replace the code and description with shipping
-    df.loc[df.StockCode.isin(['POST','DOT']),['Description','StockCode']] = 'SHIPPING'
+    df.loc[df.StockCode.isin(['POST']),['Description','StockCode']] = 'SHIPPING'
+    df.loc[df.StockCode.isin(['DOT']),['Description','StockCode']] = 'SHIPPING-DOT'
 
     # There are two entries with amazon fee, and these invoices contain only that item, will drop them
     df = df[~df.Description.str.contains('AMAZON', na=False)]
