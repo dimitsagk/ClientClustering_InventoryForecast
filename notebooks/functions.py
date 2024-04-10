@@ -12,7 +12,9 @@ def cleaning(df):
 
     
     # Formatting, removing .0 from CustomerID -> column will become Object after and NaN will be preserved
-    df.CustomerID = df.CustomerID.apply(lambda x: format(x, '.0f') if not pd.isna(x) else x)
+    #df.CustomerID = df.CustomerID.apply(lambda x: format(x, '.0f') if not pd.isna(x) else x)
+    df['CustomerID'] = df['CustomerID'].astype('Int64')
+    
     # Changing country EIRE to Ireland
     df.Country = df.Country.replace('EIRE','Ireland')
 
@@ -39,6 +41,13 @@ def cleaning(df):
     # I will drop the NaN from StockCode (they are from the MANUAL code) because they don't offer any clear insights
     df.dropna(subset='StockCode', inplace=True)
 
+    
+    # Correcting multiple descriptions for StockCodes
+    stock_descr = pd.DataFrame(df.groupby('StockCode')['Description'].agg(lambda x: x.value_counts().index[0]))
+    stock_descr.reset_index(inplace=True)
+    df.Description = df.StockCode.map(dict(zip(stock_descr.StockCode, stock_descr.Description)))
+
+    
     # Resetting index
     df.reset_index(drop=True, inplace=True)
     
