@@ -21,32 +21,16 @@ def cleaning(df):
     
     # Dropping invoices that are cancellations -> the Invoice codes that start with 'C'
     df = df[~df.InvoiceNo.str.startswith('C', na=False)]
-    
-    # Dropping orders that were samples or adjusted bad debt (StockCode 'S' or 'B')
-    df = df[~df.StockCode.isin(['S','B'])]
-    
-    # for Manual orders (StockCode 'M' or 'm') I will add to StockCode and Description NaN, to treat them as such
-    df.loc[df.StockCode.isin(['M','m']),['Description','StockCode']] = np.nan
-
-
-    # I see that there are also the shipping costs with SrockCode 'POST' and 'DOT'
-    # For clarity I will replace the code and description with shipping
-    df.loc[df.StockCode.isin(['POST']),['Description','StockCode']] = 'SHIPPING'
-    df.loc[df.StockCode.isin(['DOT']),['Description','StockCode']] = 'SHIPPING-DOT'
-
-    # There are two entries with amazon fee, and these invoices contain only that item, will drop them
-    df = df[~df.Description.str.contains('AMAZON', na=False)]
 
     
-    # it looks that the top Unit prices are either Shipping or NaN
-    # I will drop the NaN from StockCode (they are from the MANUAL code) because they don't offer any clear insights
-    df.dropna(subset='StockCode', inplace=True)
+    # Adding anything that is not Sock to StockCode 'OTHER'
+    df.loc[df.StockCode.isin(['M', 'D', 'S', 'B', 'm','C2','POST','DOT','AMAZONFEE','CRUK']),'StockCode'] = 'OTHER'
 
     
     # Correcting multiple descriptions for StockCodes
-    stock_descr = pd.DataFrame(df.groupby('StockCode')['Description'].agg(lambda x: x.value_counts().index[0]))
-    stock_descr.reset_index(inplace=True)
-    df.Description = df.StockCode.map(dict(zip(stock_descr.StockCode, stock_descr.Description)))
+    #stock_descr = pd.DataFrame(df.groupby('StockCode')['Description'].agg(lambda x: x.value_counts().index[0]))
+    #stock_descr.reset_index(inplace=True)
+    #df.Description = df.StockCode.map(dict(zip(stock_descr.StockCode, stock_descr.Description)))
 
     
     # Resetting index
