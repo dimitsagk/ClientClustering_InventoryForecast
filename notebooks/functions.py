@@ -282,28 +282,33 @@ def mshift_model(df,n_bandwidth):
 
 
 
-def prophet_model(df, days):
+def prophet_model(df2, days):
     ''' Prophet model used for inventory forecast.
     Takes the dataframe as parameter, and how many days will be assigned for the test group, and splits the dataset internally.
-    Returns the forecasts, and prints the model evaluation metrics.'''
+    Returns the forecasts and RMSE value, and prints the model evaluation metrics.'''
 
+    df = df2.copy()
     # Splitting, train, test
     train = df.iloc[:len(df) - days]
     test = df.iloc[len(df) - days:]
 
+
     # Training model
     m = Prophet()
+    m.add_country_holidays(country_name='UK')
     m.fit(train)
     future = m.make_future_dataframe(periods = days)
     forecast = m.predict(future)
 
     # Model evaluation
-    predictions = forecast.iloc[-73:]['yhat']
-    print("Root Mean Squared Error: ",rmse(predictions, test['y']))
-    print("Mean Absolute Error: ", mean_absolute_error(test['y'], predictions))
+    predictions = forecast.iloc[-days:]['yhat']
+    actual_values = test['y']
+    rmse_n = rmse(predictions, actual_values)
+    print("Root Mean Squared Error: ",rmse_n)
+    print("Mean Absolute Error: ", mean_absolute_error(actual_values, predictions))
 
 
-    return forecast
+    return forecast, rmse_n
 
 
 
