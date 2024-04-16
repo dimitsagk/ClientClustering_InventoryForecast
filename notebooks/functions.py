@@ -9,6 +9,11 @@ from sklearn.mixture import GaussianMixture
 from sklearn import metrics
 from sklearn.metrics import pairwise_distances, davies_bouldin_score
 
+from prophet import Prophet
+
+from statsmodels.tools.eval_measures import rmse
+from sklearn.metrics import mean_absolute_error
+
 
 def cleaning(df):
 
@@ -274,6 +279,32 @@ def mshift_model(df,n_bandwidth):
         print(f"Label: {df_m['mshift_labels'].unique()[i]}, Percentage total customers: {round(df_m[df_m['mshift_labels'] == i].shape[0] *100/df_m.shape[0],2)}%")
         
     return df_m
-    
+
+
+
+def prophet_model(df, days):
+    ''' Prophet model used for inventory forecast.
+    Takes the dataframe as parameter, and how many days will be assigned for the test group, and splits the dataset internally.
+    Returns the forecasts, and prints the model evaluation metrics.'''
+
+    # Splitting, train, test
+    train = df.iloc[:len(df) - days]
+    test = df.iloc[len(df) - days:]
+
+    # Training model
+    m = Prophet()
+    m.fit(train)
+    future = m.make_future_dataframe(periods = days)
+    forecast = m.predict(future)
+
+    # Model evaluation
+    predictions = forecast.iloc[-73:]['yhat']
+    print("Root Mean Squared Error: ",rmse(predictions, test['y']))
+    print("Mean Absolute Error: ", mean_absolute_error(test['y'], predictions))
+
+
+    return forecast
+
+
 
     
