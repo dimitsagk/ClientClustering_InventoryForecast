@@ -323,15 +323,24 @@ def mshift_model(df,n_bandwidth):
 
 
 
-def prophet_model(df2, days):
+def prophet_model(df2, days, df2_unclipped=None):
     ''' Prophet model used for inventory forecast.
     Takes the dataframe as parameter, and how many days will be assigned for the test group, and splits the dataset internally.
-    Returns the forecasts and RMSE value, and prints the model evaluation metrics.'''
+    
+    Optional parameter: for the cases that data with clipped outliers are used.
+    The difference is that the metrics, instead of comparing the predictions with the test of the same df (with outliers clipping)
+    compares them with the test dateset without outliers clipping.
+    
+    Returns: None'''
 
     df = df2.copy()
     # Splitting, train, test
     train = df.iloc[:len(df) - days]
-    test = df.iloc[len(df) - days:]
+    if df2_unclipped == None:
+        test = df.iloc[len(df) - days:]
+    else:
+        df_unclipped = df2_unclipped.copy()
+        test = df_unclipped.iloc[len(df_unclipped) - days:]
 
     # to set logging level to ERROR
     # that is because in the model forecasts I was getting updates on time started/ completed and was visually confusing
@@ -353,7 +362,7 @@ def prophet_model(df2, days):
     print("Mean Absolute Error: ", mae_n)
 
 
-    return forecast, rmse_n, mae_n
+    return 
 
 
 
@@ -505,14 +514,16 @@ def prophet_model_per_product(df, product, product_n):
 
     # Model
     print(f"\033[1m\n\nTop {product_n+1} product, no clusters, no outlier clipping:\033[0m")
-    _,_,_ = prophet_model(df_TopPr, 60)
+    prophet_model(df_TopPr, 60)
     print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping:\033[0m")
-    _,_,_ = prophet_model(df_TopPr_clip, 60)
+    prophet_model(df_TopPr_clip, 60)
+    print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping, metrics compared to test set without clipping:\033[0m")
+    prophet_model(df_TopPr_clip, 60, df_TopPr)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, no outlier clipping:\033[0m")
     prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_TopPr_cl3, 60, df, product)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping:\033[0m")
     prophet_model_with_clusters(df_TopPr_cl0_clip, df_TopPr_cl1_clip, df_TopPr_cl2_clip, df_TopPr_cl3_clip, 60, df, product)
+    print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping, metrics compared to test set without clipping:\033[0m")
 
     return
-
-    
+  
