@@ -347,8 +347,8 @@ def prophet_model(df2, days):
     # Model evaluation
     predictions = forecast.iloc[-days:]['yhat']
     actual_values = test['y']
-    rmse_n = rmse(predictions, actual_values)
-    mae_n = mean_absolute_error(actual_values, predictions)
+    rmse_n = round(rmse(predictions, actual_values),4)
+    mae_n = round(mean_absolute_error(actual_values, predictions),4)
     print("Root Mean Squared Error: ",rmse_n)
     print("Mean Absolute Error: ", mae_n)
 
@@ -466,7 +466,7 @@ def prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_Top
     return
 
 
-def prophet_model_per_product(df_original, product, product_n):
+def prophet_model_per_product(df, product, product_n):
     ''' Temporary function for testing Prophet forecasting on multiple top-selling products.
 
     Due to time constraints, this function duplicates code from the main file to test the Prophet
@@ -482,8 +482,8 @@ def prophet_model_per_product(df_original, product, product_n):
     Returns: None
     '''
     
-    df_TopPr = df_prophet_prep(df_original, product, False) 
-    df_TopPr_clip = df_prophet_prep(df_original, product, True)
+    df_TopPr = df_prophet_prep(df, product, False) 
+    df_TopPr_clip = df_prophet_prep(df, product, True)
 
     # Splitting dataset per cluster
     df_cl0 = df[df.Label == 0].reset_index(drop=True)
@@ -509,9 +509,9 @@ def prophet_model_per_product(df_original, product, product_n):
     print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping:\033[0m")
     _,_,_ = prophet_model(df_TopPr_clip, 60)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, no outlier clipping:\033[0m")
-    prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_TopPr_cl3, 60, df_original, product)
+    prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_TopPr_cl3, 60, df, product)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping:\033[0m")
-    prophet_model_with_clusters(df_TopPr_cl0_clip, df_TopPr_cl1_clip, df_TopPr_cl2_clip, df_TopPr_cl3_clip, 60, df_original, product)
+    prophet_model_with_clusters(df_TopPr_cl0_clip, df_TopPr_cl1_clip, df_TopPr_cl2_clip, df_TopPr_cl3_clip, 60, df, product)
 
     return
 
