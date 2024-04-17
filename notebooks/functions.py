@@ -15,6 +15,7 @@ from statsmodels.tools.eval_measures import rmse
 from sklearn.metrics import mean_absolute_error
 
 
+
 def cleaning(df):
 
     # Missing values
@@ -93,6 +94,45 @@ def feat_eng(df):
     cust.set_index('CustomerID', inplace=True)
 
     return cust    
+
+
+def outlier_scaling(df):
+    '''Function that performs outlier scaling.
+    There are two outliers that have been spoted throught the EDA, that have huge difference in scale, and seem to be two stand-alone
+    cases (they are not repeating customers).
+    Through the analysis I have decided to scale the Quantity of them to the next highest value after these two."
+    Receives the daframe as parameter and returns the updated dataframe with outlier clipping, 
+    and updated the Total Price column accordingly.'''
+
+    condition = df.InvoiceNo.isin(['581483','541431'])
+
+    df.loc[condition,'Quantity'] = df.Quantity.sort_values(ascending=False).values[2]
+    df.loc[condition,'TotalPrice'] = df.Quantity * df.UnitPrice  
+
+    return df
+
+
+def outliers_clipping_STD(df, col_name):
+    ''' Function that does outlier clipping based on the Standard Deviation Method.
+    It receives as parameters the dataframe and the column where oultier clipping will be performed.
+    Returns updated dataframe and prints how many instances had outlier clipping performed to them.
+    '''
+
+    # Checking if column if integer or float type, to format accordingly
+    # checking only upper limit. I don't have lower limit, cause everything start from 0
+    if df[col_name].dtype == 'int64':        
+        tq_UpperLimit = (df[col_name].mean() + df[col_name].std()*3).round(0).astype(int)
+    else:
+        tq_UpperLimit = (df[col_name].mean() + df[col_name].std()*3).round(2)         
+
+    
+    print("Instances that needed outlier clipping: ", df[df[col_name] > tq_UpperLimit].shape[0],
+              ", out of total instances: ",df[col_name].shape[0])
+    
+    df.loc[df[col_name] > tq_UpperLimit , col_name] = tq_UpperLimit  
+
+    return df
+
 
 
 def scaling_data(df):
@@ -312,11 +352,19 @@ def df_prophet_prep(df, product, clipping = False):
     '''Function to prepare the dataframe for the prophet model.
     The dataframe is filtered to refer only to 1 product (one of the top selling ones).
     Receives as parameters the dataframe that needs adjustment, the product, and whether outlier clipping will be performed.
-    Returns updated dataframe.
+    Returns updated dataframe and prints in how many instances there needed to be done outlier clipping.
     '''
     
     df = df[df.StockCode == product].drop(columns='StockCode').reset_index(drop=True)
-  
+
+    # if needed, clipping of outliers, using the Standard Deviation method
+    if clipping == True:
+        tq_UpperLimit = (df['Quantity'].mean() + df['Quantity'].std()*3).round(0).astype(int)
+        print("Instances that needed outlier clipping: ", df[df['Quantity'] > tq_UpperLimit].shape[0],
+              ", out of total instances: ",df['Quantity'].shape[0])
+        df.loc[df['Quantity'] > tq_UpperLimit , 'Quantity'] = tq_UpperLimit
+
+    
     # Adding rows for all dates, even if there is no data
     # Defining the known start and end dates of the dataset and creating dataframe with all the dates in between
     start_date = '2010-12-01'
@@ -341,13 +389,7 @@ def df_prophet_prep(df, product, clipping = False):
     # making sure the column order is as needed for the prophet model
     merged_df = merged_df[['ds', 'y']] 
 
-    # if needed, clipping of outliers, using the Standard Deviation method
-    if clipping == True:
-        tq_UpperLimit = (merged_df.y.mean() + merged_df.y.std()*3).round(0).astype(int)
-        merged_df_clip = merged_df.copy()
-        merged_df_clip.loc[merged_df_clip.y > tq_UpperLimit , 'y'] = tq_UpperLimit        
-        return merged_df_clip
-    else:
-        return merged_df
+    
+    return merged_df
 
     
