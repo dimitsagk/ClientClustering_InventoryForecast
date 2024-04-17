@@ -14,6 +14,10 @@ from prophet import Prophet
 from statsmodels.tools.eval_measures import rmse
 from sklearn.metrics import mean_absolute_error
 
+# to set logging level to ERROR
+# that is because in the model forecasts I was getting updates on time started/ completed and was visually confusing
+import logging
+
 
 
 def cleaning(df):
@@ -329,8 +333,11 @@ def prophet_model(df2, days):
     train = df.iloc[:len(df) - days]
     test = df.iloc[len(df) - days:]
 
-
-    # Training model
+    # to set logging level to ERROR
+    # that is because in the model forecasts I was getting updates on time started/ completed and was visually confusing
+    logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
+    
+    # Training model    
     m = Prophet()
     m.add_country_holidays(country_name='UK')
     m.fit(train)
