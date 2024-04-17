@@ -23,18 +23,15 @@ def cleaning(df):
 
     # Drop duplicates
     df.drop_duplicates(inplace=True)
-
-    
+   
     # Formatting, removing .0 from CustomerID -> column will become Object after and NaN will be preserved
     df['CustomerID'] = df['CustomerID'].astype('Int64')
     
     # Changing country EIRE to Ireland
     df.Country = df.Country.replace('EIRE','Ireland')
-
-    
+   
     # Dropping invoices that are cancellations -> the Invoice codes that start with 'C'
     df = df[~df.InvoiceNo.str.startswith('C', na=False)]
-
     
     # Adding anything that is not Sock to StockCode 'OTHER'
     df.loc[df.StockCode.isin(['M', 'D', 'S', 'B', 'm','C2','POST','DOT','AMAZONFEE','CRUK']),'StockCode'] = 'OTHER'
@@ -311,5 +308,46 @@ def prophet_model(df2, days):
     return forecast, rmse_n
 
 
+def df_prophet_prep(df, product, clipping = False):
+    '''Function to prepare the dataframe for the prophet model.
+    The dataframe is filtered to refer only to 1 product (one of the top selling ones).
+    Receives as parameters the dataframe that needs adjustment, the product, and whether outlier clipping will be performed.
+    Returns updated dataframe.
+    '''
+    
+    df = df[df.StockCode == product].drop(columns='StockCode').reset_index(drop=True)
+  
+    # Adding rows for all dates, even if there is no data
+    # Defining the known start and end dates of the dataset and creating dataframe with all the dates in between
+    start_date = '2010-12-01'
+    end_date = '2011-12-09'
+    all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
+    all_dates_df = pd.DataFrame({'InvoiceDate': all_dates})
+
+    # merging the date dataframe with the main dataframe
+    merged_df = all_dates_df.merge(df, on='InvoiceDate', how='left').fillna(0)
+
+    # and then grouping to make sure, I have only ont line per day
+    merged_df = merged_df.groupby('InvoiceDate')['Quantity'].sum().reset_index()
+
+    
+    # Renaming columns as needed for the prophet model
+    for i in range(merged_df.shape[1]):
+        if merged_df.iloc[:,i].dtypes =='<M8[ns]':
+            merged_df.rename(columns={merged_df.columns[i]: "ds"}, inplace=True)
+        else:
+            merged_df.rename(columns={merged_df.columns[i]: "y"}, inplace=True)
+
+    # making sure the column order is as needed for the prophet model
+    merged_df = merged_df[['ds', 'y']] 
+
+    # if needed, clipping of outliers, using the Standard Deviation method
+    if clipping == True:
+        tq_UpperLimit = (merged_df.y.mean() + merged_df.y.std()*3).round(0).astype(int)
+        merged_df_clip = merged_df.copy()
+        merged_df_clip.loc[merged_df_clip.y > tq_UpperLimit , 'y'] = tq_UpperLimit        
+        return merged_df_clip
+    else:
+        return merged_df
 
     
