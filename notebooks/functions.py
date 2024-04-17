@@ -400,7 +400,7 @@ def df_prophet_prep(df, product, clipping = False):
     return merged_df
 
 
-def metrics_calc_clusters(df, product, rmse_TopPr0, mae_TopPr0):
+def metrics_calc_clusters(df, product, rmse_TopPr, mae_TopPr):
     """
     Function that calculates the collective RMSE and MAE values for predictions based on clusters,
     where the total success is proportional to the size of each cluster.
@@ -416,17 +416,17 @@ def metrics_calc_clusters(df, product, rmse_TopPr0, mae_TopPr0):
                           df[df.StockCode==product].shape[0])*100,2) for i in range(4)]
 
     # Calculating the propotional RMSE and MAE values per cluster
-    proportional_rmse_TopPr0_values = [rmse * percentage * 0.01 for rmse, percentage in zip(rmse_TopPr0, label_percentages)]
-    proportional_mae_TopPr0_values = [mae * percentage * 0.01 for mae, percentage in zip(mae_TopPr0, label_percentages)]
+    proportional_rmse_TopPr_values = [rmse * percentage * 0.01 for rmse, percentage in zip(rmse_TopPr, label_percentages)]
+    proportional_mae_TopPr_values = [mae * percentage * 0.01 for mae, percentage in zip(mae_TopPr, label_percentages)]
 
     # Calculating the collective RMSE and MAE values
-    print('RMSE: ',sum(proportional_rmse_TopPr0_values),', MAE: ',sum(proportional_mae_TopPr0_values))
+    print('RMSE: ',sum(proportional_rmse_TopPr_values),', MAE: ',sum(proportional_mae_TopPr_values))
 
     return
 
 
 
-def prophet_model_with_clusters(df_TopPr0_cl0, df_TopPr0_cl1, df_TopPr0_cl2, df_TopPr0_cl3, days, df, product):
+def prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_TopPr_cl3, days, df, product):
     '''
     Performs Prophet forecasting for a product with cluster separation.
 
@@ -443,30 +443,30 @@ def prophet_model_with_clusters(df_TopPr0_cl0, df_TopPr0_cl1, df_TopPr0_cl2, df_
     Returns: None
     '''
     
-    rmse_TopPr0 = [0] * 4
-    mae_TopPr0 = [0] * 4
+    rmse_TopPr = [0] * 4
+    mae_TopPr = [0] * 4
 
-    # Creating dataframes for the top product 1, for the dataframes with cluster seperation, and no outlier clipping
+    # Creating dataframes for the top selected product, for the dataframes with cluster seperation, and no outlier clipping
     # Cluster 0
     print('Cluster 0:')
-    _, rmse_TopPr0[0], mae_TopPr0[0] = prophet_model(df_TopPr0_cl0, days)
+    _, rmse_TopPr[0], mae_TopPr[0] = prophet_model(df_TopPr_cl0, days)
     # Cluster 1
     print('Cluster 1:')
-    _, rmse_TopPr0[1], mae_TopPr0[1] = prophet_model(df_TopPr0_cl1, days)
+    _, rmse_TopPr[1], mae_TopPr[1] = prophet_model(df_TopPr_cl1, days)
     # Cluster 2
     print('Cluster 2:')
-    _, rmse_TopPr0[2], mae_TopPr0[2] = prophet_model(df_TopPr0_cl2, days)
+    _, rmse_TopPr[2], mae_TopPr[2] = prophet_model(df_TopPr_cl2, days)
     # Cluster 3
     print('Cluster 3:')
-    _, rmse_TopPr0[3], mae_TopPr0[3] = prophet_model(df_TopPr0_cl3, days)
+    _, rmse_TopPr[3], mae_TopPr[3] = prophet_model(df_TopPr_cl3, days)
 
     print('\nCollective metrics for this model:')
-    metrics_calc_clusters(df, product, rmse_TopPr0, mae_TopPr0)
+    metrics_calc_clusters(df, product, rmse_TopPr, mae_TopPr)
 
     return
 
 
-def prophet_model_per_product(df, product, product_n):
+def prophet_model_per_product(df_original, product, product_n):
     ''' Temporary function for testing Prophet forecasting on multiple top-selling products.
 
     Due to time constraints, this function duplicates code from the main file to test the Prophet
@@ -482,8 +482,8 @@ def prophet_model_per_product(df, product, product_n):
     Returns: None
     '''
     
-    df_TopPr0 = df_prophet_prep(df, product, False) 
-    df_TopPr0_clip = df_prophet_prep(df, product, True)
+    df_TopPr = df_prophet_prep(df_original, product, False) 
+    df_TopPr_clip = df_prophet_prep(df_original, product, True)
 
     # Splitting dataset per cluster
     df_cl0 = df[df.Label == 0].reset_index(drop=True)
@@ -492,26 +492,26 @@ def prophet_model_per_product(df, product, product_n):
     df_cl3 = df[df.Label == 3].reset_index(drop=True)
 
     # Creating dataframes for the top product 1, for the dataframes with cluster seperation, and no outlier clipping
-    df_TopPr0_cl0 = df_prophet_prep(df_cl0.drop(columns='Label'), product, False)
-    df_TopPr0_cl1 = df_prophet_prep(df_cl1.drop(columns='Label'), product, False)
-    df_TopPr0_cl2 = df_prophet_prep(df_cl2.drop(columns='Label'), product, False)
-    df_TopPr0_cl3 = df_prophet_prep(df_cl3.drop(columns='Label'), product, False)
+    df_TopPr_cl0 = df_prophet_prep(df_cl0.drop(columns='Label'), product, False)
+    df_TopPr_cl1 = df_prophet_prep(df_cl1.drop(columns='Label'), product, False)
+    df_TopPr_cl2 = df_prophet_prep(df_cl2.drop(columns='Label'), product, False)
+    df_TopPr_cl3 = df_prophet_prep(df_cl3.drop(columns='Label'), product, False)
 
     # Creating dataframes for the top product 1, for the dataframes with cluster seperation, and with outlier clipping
-    df_TopPr0_cl0_clip = df_prophet_prep(df_cl0.drop(columns='Label'), product, True)
-    df_TopPr0_cl1_clip = df_prophet_prep(df_cl1.drop(columns='Label'), product, True)
-    df_TopPr0_cl2_clip = df_prophet_prep(df_cl2.drop(columns='Label'), product, True)
-    df_TopPr0_cl3_clip = df_prophet_prep(df_cl3.drop(columns='Label'), product, True)
+    df_TopPr_cl0_clip = df_prophet_prep(df_cl0.drop(columns='Label'), product, True)
+    df_TopPr_cl1_clip = df_prophet_prep(df_cl1.drop(columns='Label'), product, True)
+    df_TopPr_cl2_clip = df_prophet_prep(df_cl2.drop(columns='Label'), product, True)
+    df_TopPr_cl3_clip = df_prophet_prep(df_cl3.drop(columns='Label'), product, True)
 
     # Model
     print(f"\033[1m\n\nTop {product_n+1} product, no clusters, no outlier clipping:\033[0m")
-    _,_,_ = prophet_model(df_TopPr0, 60)
+    _,_,_ = prophet_model(df_TopPr, 60)
     print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping:\033[0m")
-    _,_,_ = prophet_model(df_TopPr0_clip, 60)
+    _,_,_ = prophet_model(df_TopPr_clip, 60)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, no outlier clipping:\033[0m")
-    prophet_model_with_clusters(df_TopPr0_cl0, df_TopPr0_cl1, df_TopPr0_cl2, df_TopPr0_cl3, 60, df, product)
+    prophet_model_with_clusters(df_TopPr_cl0, df_TopPr_cl1, df_TopPr_cl2, df_TopPr_cl3, 60, df_original, product)
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping:\033[0m")
-    prophet_model_with_clusters(df_TopPr0_cl0_clip, df_TopPr0_cl1_clip, df_TopPr0_cl2_clip, df_TopPr0_cl3_clip, 60, df, product)
+    prophet_model_with_clusters(df_TopPr_cl0_clip, df_TopPr_cl1_clip, df_TopPr_cl2_clip, df_TopPr_cl3_clip, 60, df_original, product)
 
     return
 
