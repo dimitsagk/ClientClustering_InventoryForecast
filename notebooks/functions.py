@@ -459,7 +459,7 @@ def prophet_model_with_clusters(df_TopPr0_cl0, df_TopPr0_cl1, df_TopPr0_cl2, df_
     return
 
 
-def prophet_model_per_product(df, product):
+def prophet_model_per_product(df, product, product_n):
     ''' Temporary function for testing Prophet forecasting on multiple top-selling products.
 
     Due to time constraints, this function duplicates code from the main file to test the Prophet
@@ -470,6 +470,7 @@ def prophet_model_per_product(df, product):
     Parameters:
     - df (DataFrame): The dataframe containing sales data.
     - product (str): The selected product for forecasting.
+    - product number, to print it, for clarity
 
     Returns: None
     '''
@@ -496,13 +497,13 @@ def prophet_model_per_product(df, product):
     df_TopPr0_cl3_clip = df_prophet_prep(df_cl3.drop(columns='Label'), product, True)
 
     # Model
-    print('\n\nTop 1 product, no clusters, no outlier clipping')
+    print(f"\033[1m\n\nTop {product_n+1} product, no clusters, no outlier clipping:\033[0m")
     _,_,_ = prophet_model(df_TopPr0, 60)
-    print('\n\nTop 1 product, no clusters, with outlier clipping')
+    print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping:\033[0m")
     _,_,_ = prophet_model(df_TopPr0_clip, 60)
-    print('\n\nTop 1 product, with clusters, no outlier clipping')
+    print(f"\033[1m\n\nTop {product_n+1} product, with clusters, no outlier clipping:\033[0m")
     prophet_model_with_clusters(df_TopPr0_cl0, df_TopPr0_cl1, df_TopPr0_cl2, df_TopPr0_cl3, 60, df, product)
-    print('\n\nTop 1 product, with clusters, with outlier clipping')
+    print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping:\033[0m")
     prophet_model_with_clusters(df_TopPr0_cl0_clip, df_TopPr0_cl1_clip, df_TopPr0_cl2_clip, df_TopPr0_cl3_clip, 60, df, product)
 
     return
