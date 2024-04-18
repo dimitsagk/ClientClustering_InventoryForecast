@@ -14,7 +14,7 @@
 
 ## Project Objective
 - **Objective:** Optimize inventory management to ensure timely availability and minimize stockouts.
-- **Approach:** Employ machine learning models to forecast inventory needs for top-selling products, considering trends and seasonality. Additionally, perform client clustering to enhance forecast accuracy.
+- **Approach:** Employ machine learning models to forecast inventory needs for top-selling products, considering trends. Additionally, perform client clustering to enhance forecast accuracy.
 
 
 ## Challenges
