@@ -291,7 +291,7 @@ def gm_model(df, n_clusters):
     for i in range(n_clusters):
         print(f"Label: {df_m['gm_labels'].unique()[i]}, Percentage total customers: {round(df_m[df_m['gm_labels'] == i].shape[0] *100/df_m.shape[0],2)}%")
         
-    return df_m
+    return df_m, gm
 
 
 def mshift_model(df,n_bandwidth):
