@@ -1,4 +1,4 @@
-# Online Retail Store Client CLustering and Inventory Forecasting Project
+# Online Retail Store Client Clustering and Inventory Forecasting Project
 
 ## Company Overview
 - **Company:** Online retail store
@@ -14,7 +14,7 @@
 
 ## Project Objective
 - **Objective:** Optimize inventory management to ensure timely availability and minimize stockouts.
-- **Approach:** Employ machine learning models to forecast inventory needs for top-selling products, considering trends. Additionally, perform client clustering to enhance forecast accuracy.
+- **Approach:** Employ machine learning models to forecast inventory needs for top-selling products, considering trends, and perform client clustering to enhance forecast accuracy.
 
 
 ## Challenges
@@ -27,9 +27,9 @@
 - **Model 1:** Utilized a supervised time series machine learning model with Prophet, incorporating feature engineering.
 - **Model 1 Performance Metrics:** Root Mean Squared Error (RMSE), Mean Absolute Error (MAE).
 - **Model 2:** Employed an unsupervised clustering model (Gaussian Mixture with 4 clusters), integrating feature engineering, data scaling, and dimensionality reduction.
-- **Model 2 Performance Metrics:** Silhouette Coefficient, Calinski-Harabasz Index, Davies-Bouldin Index.
+- **Model 2 Performance Metrics:** Silhouette Coefficient, Calinski-Harabasz Index, Davies-Bouldin Index, Count of customers per cluster, Visual inspection
 
 
 ## Results
-- **Comparative Analysis:** Compared forecasting models with and without client clustering
-- **Error Rate:** Models with clustering showed a 70% lower error rate compared to those without
+- **Comparative Analysis:** Compared forecasting models with and without client clustering.
+- **Error Rate:** Models with clustering showed a 70% lower error rate compared to those without.
