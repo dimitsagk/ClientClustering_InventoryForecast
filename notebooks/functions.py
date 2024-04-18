@@ -38,7 +38,7 @@ def cleaning(df):
     # Dropping invoices that are cancellations -> the Invoice codes that start with 'C'
     df = df[~df.InvoiceNo.str.startswith('C', na=False)]
     
-    # Adding anything that is not Sock to StockCode 'OTHER'
+    # Adding anything that is not Stock to StockCode 'OTHER'
     df.loc[df.StockCode.isin(['M', 'D', 'S', 'B', 'm','C2','POST','DOT','AMAZONFEE','CRUK']),'StockCode'] = 'OTHER'
 
 
@@ -209,6 +209,7 @@ def dbscan_model(df, n_eps, n_min_samples):
         print(f"Label: {label}, Percentage total customers: {round(df_m[df_m['dbscan_labels'] == label].shape[0] *100/df_m.shape[0],2)}%")
         
     return df_m
+
 
 
 def scatter_plot(df, labels, col1='TotalQuantity', col2='AvrgOrderValue'):
@@ -546,5 +547,130 @@ def prophet_model_per_product(df, product, product_n):
     print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping, metrics compared to test set without clipping:\033[0m")
     prophet_model_with_clusters(df, 60, product, True, True)
     return
+
+
+
+####### temporary, quick alterations of the above functions, to be able to produce plots
+
+def prophet_model_SELECTED_MODEL_returns_forecast(df2, days, df2_unclipped=None):
+    df = df2.copy()
+    # Splitting, train, test
+    train = df.iloc[:len(df) - days]
+    if df2_unclipped is None:
+        test = df.iloc[len(df) - days:]
+    else:
+        test = df2_unclipped.iloc[len(df2_unclipped) - days:]
+    
+
+    # to set logging level to ERROR
+    # that is because in the model forecasts I was getting updates on time started/ completed and was visually confusing
+    logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
+    
+    # Training model    
+    m = Prophet()
+    m.add_country_holidays(country_name='UK')
+    m.fit(train)
+    future = m.make_future_dataframe(periods = days)
+    forecast = m.predict(future)
+
+    # Model evaluation
+    predictions = forecast.iloc[-days:]['yhat']
+    actual_values = test['y']
+    rmse_n = round(rmse(predictions, actual_values),4)
+    mae_n = round(mean_absolute_error(actual_values, predictions),4)
+    print("Root Mean Squared Error: ",rmse_n)
+    print("Mean Absolute Error: ", mae_n)
+
+
+    return forecast, m, test
+
+
+def prophet_model_per_product_SELECTED_MODEL_returns_forecast(df, product, product_n):
+    
+    df_TopPr = df_prophet_prep(df, product, False)
+    df_TopPr_clip = df_prophet_prep(df, product, True)
+    
+
+    # Model
+    print(f"\033[1m\n\nTop {product_n+1} product, no clusters, with outlier clipping, metrics compared to test set without clipping:\033[0m")
+    forecast, m, test = prophet_model_SELECTED_MODEL_returns_forecast(df_TopPr_clip, 60, df_TopPr)
+
+    return forecast, m, test
+
+
+def prophet_model_with_clusters_CLUSTER_SELECTED_MODEL_returns_forecast(df, days, product, clipping= False, metrics_vs_unclipped=False):
+
+    # Splitting dataset per cluster
+    df_cl0 = df[df.Label == 0].reset_index(drop=True)
+    df_cl1 = df[df.Label == 1].reset_index(drop=True)
+    df_cl2 = df[df.Label == 2].reset_index(drop=True)
+    df_cl3 = df[df.Label == 3].reset_index(drop=True)
+
+    if clipping == False:
+        # Creating dataframes for the top product 1, for the dataframes with cluster seperation, and no outlier clipping
+        df_TopPr_cl0 = df_prophet_prep(df_cl0.drop(columns='Label'), product, False)
+        df_TopPr_cl1 = df_prophet_prep(df_cl1.drop(columns='Label'), product, False)
+        df_TopPr_cl2 = df_prophet_prep(df_cl2.drop(columns='Label'), product, False)
+        df_TopPr_cl3 = df_prophet_prep(df_cl3.drop(columns='Label'), product, False)
+        # setting also the unclipped version to none
+        # (the unclipped version is built in the prophet_model function, and is used to compared clipped train datesets with unclipped test datasets
+        df_TopPr_cl0_unclipped = None
+        df_TopPr_cl1_unclipped = None
+        df_TopPr_cl2_unclipped = None
+        df_TopPr_cl3_unclipped = None
+    else:
+        # Creating dataframes for the top product 1, for the dataframes with cluster seperation, and with outlier clipping
+        df_TopPr_cl0 = df_prophet_prep(df_cl0.drop(columns='Label'), product, True)
+        df_TopPr_cl1 = df_prophet_prep(df_cl1.drop(columns='Label'), product, True)
+        df_TopPr_cl2 = df_prophet_prep(df_cl2.drop(columns='Label'), product, True)
+        df_TopPr_cl3 = df_prophet_prep(df_cl3.drop(columns='Label'), product, True)
+        if metrics_vs_unclipped == False:
+            df_TopPr_cl0_unclipped = None
+            df_TopPr_cl1_unclipped = None
+            df_TopPr_cl2_unclipped = None
+            df_TopPr_cl3_unclipped = None
+        else:
+            # and the unclipped versions for the metrics, in case comparison with unclipped test set is selected
+            df_TopPr_cl0_unclipped = df_prophet_prep(df_cl0.drop(columns='Label'), product, False)
+            df_TopPr_cl1_unclipped = df_prophet_prep(df_cl1.drop(columns='Label'), product, False)
+            df_TopPr_cl2_unclipped = df_prophet_prep(df_cl2.drop(columns='Label'), product, False)
+            df_TopPr_cl3_unclipped = df_prophet_prep(df_cl3.drop(columns='Label'), product, False)
+    
+    
+    rmse_TopPr = [0] * 4
+    mae_TopPr = [0] * 4
+
+    # Creating dataframes for the top selected product, for the dataframes with cluster seperation, and no outlier clipping
+    # Cluster 0
+    print('Cluster 0:')
+    forecast1, m1, test1 = prophet_model_SELECTED_MODEL_returns_forecast(df_TopPr_cl0, days, df_TopPr_cl0_unclipped)
+    # Cluster 1
+    print('Cluster 1:')
+    forecast2, m2, test2 = prophet_model_SELECTED_MODEL_returns_forecast(df_TopPr_cl1, days, df_TopPr_cl1_unclipped)
+    # Cluster 2
+    print('Cluster 2:')
+    forecast3, m3, test3 = prophet_model_SELECTED_MODEL_returns_forecast(df_TopPr_cl2, days, df_TopPr_cl2_unclipped)
+    # Cluster 3
+    print('Cluster 3:')
+    forecast4, m4, test4 = prophet_model_SELECTED_MODEL_returns_forecast(df_TopPr_cl3, days, df_TopPr_cl3_unclipped)
+
+    print('\nCollective metrics for this model:')
+    metrics_calc_clusters(df, product, rmse_TopPr, mae_TopPr)
+
+    return forecast1, m1, test1,forecast2, m2, test2,forecast3, m3, test3,forecast4, m4, test4
+
+
+def prophet_model_per_product_CLUSTER_SELECTED_MODEL_returns_forecast(df, product, product_n):
+        
+    df_TopPr = df_prophet_prep(df, product, False)
+    df_TopPr_clip = df_prophet_prep(df, product, True)
+    
+
+    # Model
+    
+    print(f"\033[1m\n\nTop {product_n+1} product, with clusters, with outlier clipping, metrics compared to test set without clipping:\033[0m")
+    forecast1, m1, test1,forecast2, m2, test2,forecast3, m3, test3,forecast4, m4, test4 = prophet_model_with_clusters_CLUSTER_SELECTED_MODEL_returns_forecast(df, 60, product, True, True)
+    return forecast1, m1, test1,forecast2, m2, test2,forecast3, m3, test3,forecast4, m4, test4
+
 
 
