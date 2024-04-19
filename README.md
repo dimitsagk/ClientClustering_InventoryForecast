@@ -31,5 +31,4 @@
 
 
 ## Results
-- **Comparative Analysis:** Compared forecasting models with and without client clustering.
-- **Error Rate:** Models with clustering showed a 70% lower error rate compared to those without.
+The clustered data significantly improved the forecast model, reducing the error rate by 70% compared to the model without clustering. While the model isn't perfect, it provides a solid foundation for further refinement and improvement.
