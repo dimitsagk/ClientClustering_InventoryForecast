@@ -64,40 +64,7 @@ def product_info_adjust(df):
     df.Description = df.StockCode.map(dict(zip(stock_descr.StockCode, stock_descr.Description)))
 
     return df
-
-
-
-def feat_eng(df):
-    ''' This function, does feature engineering and returns the constructed dataframe.
-    Thsi is for the ML model for Client clustering, used mostly at the notebook 03_ML_ClientClustering-notebook.'''
-    #Total quantity purchased
-    cust = df.groupby('CustomerID')['Quantity'].sum().reset_index().rename(columns={'Quantity': 'TotalQuantity'})
-
-    # Total value of orders
-    cust = pd.merge(cust, df.groupby('CustomerID')['TotalPrice'].sum().reset_index().rename(columns={'TotalPrice': 'TotalValue'}), 
-                                                                                       how='left', on='CustomerID')
-
-    # Average quantity per item per order
-    # Grouping by StockCode, in case in the same invoice client has added the product more than once
-    item_quant = df.groupby(['CustomerID','InvoiceNo','StockCode'])['Quantity'].sum().reset_index()
-
-    cust = pd.merge(cust, item_quant.groupby('CustomerID')['Quantity'].mean().round(2).reset_index().rename(columns={'Quantity':'AvrgQuantity'}), 
-                                                                                       how='left', on='CustomerID')
-
-    # Average value per order
-    order_val = df.groupby(['CustomerID','InvoiceNo'])['TotalPrice'].sum().reset_index()
-    avrg_val = order_val.groupby('CustomerID')['TotalPrice'].mean().round(2).reset_index().rename(columns={'TotalPrice':'AvrgOrderValue'})
-
-    cust = pd.merge(cust, avrg_val, how='left', on='CustomerID')
-
-    # Total orders number
-    cust = pd.merge(cust, df.groupby('CustomerID')['InvoiceNo'].nunique().reset_index().rename(columns={'InvoiceNo': 'TotalOrders'}), 
-                                                                                       how='left', on='CustomerID')
-
-    # Setting CustomerID as index
-    cust.set_index('CustomerID', inplace=True)
-
-    return cust    
+ 
 
 
 def outlier_scaling(df):
